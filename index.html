@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serial Barcode Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap');
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --accent: #e8ff00;
+    --accent2: #00d4ff;
+    --text: #f0f0f0;
+    --muted: #666;
+    --danger: #ff4444;
+    --success: #00ff88;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .logo-mark {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border: 1px solid var(--accent);
+    padding: 3px 8px;
+  }
+
+  .logo-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .status-bar {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .status-bar span { color: var(--accent2); }
+
+  /* Main layout */
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 0;
+    height: calc(100vh - 61px);
+  }
+
+  /* Left panel */
+  .panel-left {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-section {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Range inputs */
+  .range-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .range-field label {
+    display: block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+  }
+
+  .range-field input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .range-field input[type="text"]:focus { border-color: var(--accent); }
+  .range-field input[type="text"].error { border-color: var(--danger); }
+  .range-field input[type="text"].ok { border-color: var(--success); }
+
+  .range-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 18px;
+    padding-top: 18px;
+  }
+
+  .range-preview-row {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    min-height: 16px;
+    letter-spacing: 0.5px;
+  }
+
+  .range-preview-row span { color: var(--accent); }
+
+  /* Scan result */
+  .scan-result {
+    display: none;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .scan-result.visible { display: block; }
+
+  .scan-result-header {
+    background: var(--surface);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .scan-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .scan-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .scan-count {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .serial-list {
+    max-height: 180px;
+    overflow-y: auto;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .serial-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.15);
+    padding: 3px 6px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Options */
+  .option-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .option-label {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text);
+  }
+
+  .option-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  select, input[type="number"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 100px;
+  }
+
+  select:focus, input[type="number"]:focus {
+    border-color: var(--accent);
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .toggle {
+    width: 36px;
+    height: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle.on {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--bg);
+    top: 2px;
+    left: 2px;
+    transition: left 0.2s;
+  }
+
+  .toggle.on::after { left: 18px; }
+
+  /* Generate button */
+  .btn-generate {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-generate:disabled {
+    background: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .btn-generate:not(:disabled):hover {
+    background: #f5ff4d;
+    transform: translateY(-1px);
+  }
+
+  .btn-generate:not(:disabled):active {
+    transform: translateY(0);
+  }
+
+  /* Right panel - preview */
+  .panel-right {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .preview-toolbar {
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+  }
+
+  .preview-info {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .preview-info span { color: var(--text); }
+
+  .btn-download {
+    padding: 8px 20px;
+    background: transparent;
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-download:hover {
+    background: var(--accent2);
+    color: var(--bg);
+  }
+
+  .btn-download:disabled {
+    border-color: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .preview-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  /* Empty state */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: var(--muted);
+    padding: 40px;
+    text-align: center;
+  }
+
+  .empty-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 20px);
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .empty-cell {
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--border);
+    border-radius: 1px;
+  }
+
+  .empty-cell:nth-child(odd) { background: rgba(255,255,255,0.03); }
+
+  .empty-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--surface2);
+  }
+
+  .empty-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--border);
+    letter-spacing: 1px;
+  }
+
+  /* Preview page */
+  .preview-page {
+    background: white;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.5);
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .page-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    align-self: flex-start;
+  }
+
+  /* Loading overlay */
+  .loading {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .loading.active { display: flex; }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  /* Error toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--danger);
+    color: white;
+    padding: 12px 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    border-radius: 2px;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 200;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">SBG</div>
+    <div class="logo-title">Serial Barcode Generator</div>
+  </div>
+  <div class="status-bar">SYSTEM READY &nbsp;|&nbsp; <span id="serial-count-header">0 SERIALS LOADED</span></div>
+</header>
+
+<main>
+  <!-- Left Panel -->
+  <div class="panel-left">
+
+    <!-- Range Input -->
+    <div class="panel-section">
+      <div class="panel-label">01 — Serial Range</div>
+      <div class="range-grid">
+        <div class="range-field">
+          <label>Start Serial</label>
+          <input type="text" id="range-start" placeholder="WHF1180286" oninput="onRangeInput()">
+        </div>
+        <div class="range-field">
+          <label>End Serial</label>
+          <input type="text" id="range-end" placeholder="WHF1180325" oninput="onRangeInput()">
+        </div>
+      </div>
+      <div class="range-preview-row" id="range-preview">Enter start and end serials above</div>
+      <button class="btn-parse" id="btn-load-range" onclick="loadRange()" disabled>Load Range</button>
+
+      <!-- Serial list preview -->
+      <div class="scan-result" id="scan-result" style="margin-top:12px;">
+        <div class="scan-result-header">
+          <div class="scan-badge">RANGE LOADED</div>
+          <div class="scan-count" id="scan-count">0 SERIALS</div>
+        </div>
+        <div class="serial-list" id="serial-list"></div>
+      </div>
+    </div>
+
+    <!-- Options -->
+    <div class="panel-section" style="flex:1;">
+      <div class="panel-label">02 — Layout Options</div>
+
+      <div class="option-row">
+        <div>
+          <div class="option-label">Columns</div>
+          <div class="option-sub">per page</div>
+        </div>
+        <select id="opt-cols">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </div>
+
+      <div class="option-row">
+        <div>
+          <div class="option-label">Rows</div>
+          <div class="option-sub">per page</div>
+        </div>
+        <select id="opt-rows">
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5" selected>5</option>
+          <option value="6">6</option>
+          <option value="8">8</option>
+          <option value="10">10</option>
+        </select>
+      </div>
+
+      <div class="option-row">
+        <div>
+          <div class="option-label">Barcode Type</div>
+          <div class="option-sub">format</div>
+        </div>
+        <select id="opt-type">
+          <option value="CODE128">Code 128</option>
+          <option value="CODE39">Code 39</option>
+        </select>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle on" id="toggle-text" onclick="this.classList.toggle('on')"></div>
+        <div>
+          <div class="option-label">Show Serial Text</div>
+          <div class="option-sub">human-readable below barcode</div>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle on" id="toggle-border" onclick="this.classList.toggle('on')"></div>
+        <div>
+          <div class="option-label">Cell Borders</div>
+          <div class="option-sub">light guides between labels</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <div style="padding:16px 24px; border-top:1px solid var(--border);">
+      <button class="btn-generate" id="btn-generate" onclick="generate()" disabled>
+        Generate Preview
+      </button>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="panel-right">
+    <div class="preview-toolbar">
+      <div class="preview-info">
+        PREVIEW &nbsp;|&nbsp; <span id="preview-pages">—</span> PAGES &nbsp;|&nbsp; <span id="preview-serials">—</span> SERIALS
+      </div>
+      <button class="btn-download" id="btn-download" onclick="downloadPDF()" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download PDF
+      </button>
+    </div>
+    <div class="preview-area" id="preview-area">
+      <div class="empty-state">
+        <div class="empty-grid">
+          <div class="empty-cell"></div><div class="empty-cell"></div>
+          <div class="empty-cell"></div><div class="empty-cell"></div>
+          <div class="empty-cell"></div><div class="empty-cell"></div>
+          <div class="empty-cell"></div><div class="empty-cell"></div>
+        </div>
+        <div class="empty-title">No Preview Yet</div>
+        <div class="empty-sub">Import a QR code or enter serials,<br>then click Generate Preview</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="loading" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">PROCESSING...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────
+let serials = [];
+let previewPages = [];
+
+// ─── Range Input Logic ────────────────────────────────────────────────────
+function onRangeInput() {
+  const startVal = document.getElementById('range-start').value.trim();
+  const endVal   = document.getElementById('range-end').value.trim();
+  const preview  = document.getElementById('range-preview');
+  const btn      = document.getElementById('btn-load-range');
+  const startEl  = document.getElementById('range-start');
+  const endEl    = document.getElementById('range-end');
+
+  startEl.classList.remove('ok','error');
+  endEl.classList.remove('ok','error');
+
+  if (!startVal || !endVal) {
+    preview.innerHTML = 'Enter start and end serials above';
+    btn.disabled = true;
+    return;
+  }
+
+  const result = parseRange(startVal, endVal);
+  if (result.error) {
+    preview.innerHTML = `<span style="color:var(--danger)">${result.error}</span>`;
+    startEl.classList.add('error');
+    endEl.classList.add('error');
+    btn.disabled = true;
+  } else {
+    preview.innerHTML = `<span>${result.count}</span> serials · ${result.prefix}<span>${result.startNum}</span> → ${result.prefix}<span>${result.endNum}</span>`;
+    startEl.classList.add('ok');
+    endEl.classList.add('ok');
+    btn.disabled = false;
+  }
+}
+
+function parseRange(startVal, endVal) {
+  // Split into prefix + numeric suffix
+  // e.g. "WHF1180286" → prefix="WHF118", num=286 (keeping zero-padding width)
+  const match = startVal.match(/^([A-Za-z]*)(\d+)$/);
+  const matchE = endVal.match(/^([A-Za-z]*)(\d+)$/);
+
+  if (!match)  return { error: 'Start serial must end with a number' };
+  if (!matchE) return { error: 'End serial must end with a number' };
+
+  const prefix  = match[1];
+  const prefixE = matchE[1];
+
+  if (prefix !== prefixE) return { error: 'Prefix mismatch between start and end' };
+
+  const startNum = parseInt(match[2], 10);
+  const endNum   = parseInt(matchE[2], 10);
+  const padLen   = match[2].length; // preserve zero-padding from start
+
+  if (endNum < startNum) return { error: 'End must be ≥ start' };
+
+  const count = endNum - startNum + 1;
+  if (count > 5000) return { error: `Range too large (${count} > 5000)` };
+
+  return { prefix, startNum, endNum, padLen, count };
+}
+
+function loadRange() {
+  const startVal = document.getElementById('range-start').value.trim();
+  const endVal   = document.getElementById('range-end').value.trim();
+  const result   = parseRange(startVal, endVal);
+  if (result.error) { showToast(result.error); return; }
+
+  const { prefix, startNum, endNum, padLen } = result;
+  const list = [];
+  for (let n = startNum; n <= endNum; n++) {
+    list.push(prefix + String(n).padStart(padLen, '0'));
+  }
+  setSerials(list);
+}
+
+// ─── Set Serials ──────────────────────────────────────────────────────────
+function setSerials(list) {
+  serials = list;
+  document.getElementById('serial-count-header').textContent = `${list.length} SERIALS LOADED`;
+  document.getElementById('scan-count').textContent = `${list.length} SERIALS`;
+  document.getElementById('btn-generate').disabled = list.length === 0;
+
+  const scanResult = document.getElementById('scan-result');
+  const serialList = document.getElementById('serial-list');
+  scanResult.classList.add('visible');
+  serialList.innerHTML = list.map(s => `<div class="serial-tag">${s}</div>`).join('');
+}
+
+// ─── Generate Preview ─────────────────────────────────────────────────────
+function generate() {
+  if (serials.length === 0) return;
+  showLoading('GENERATING BARCODES...');
+
+  setTimeout(() => {
+    const cols = parseInt(document.getElementById('opt-cols').value);
+    const rows = parseInt(document.getElementById('opt-rows').value);
+    const btype = document.getElementById('opt-type').value;
+    const showText = document.getElementById('toggle-text').classList.contains('on');
+    const showBorder = document.getElementById('toggle-border').classList.contains('on');
+
+    const perPage = cols * rows;
+    const numPages = Math.ceil(serials.length / perPage);
+
+    // Page size: Letter = 8.5 x 11 inches at 96dpi = 816 x 1056px
+    // We'll render at a scaled-down size for preview
+    const PAGE_W_IN = 8.5;
+    const PAGE_H_IN = 11;
+    const DPI = 96;
+    const SCALE = 0.7; // preview scale
+    const PW = PAGE_W_IN * DPI * SCALE;
+    const PH = PAGE_H_IN * DPI * SCALE;
+
+    const MARGIN_X = 0.5 * DPI * SCALE;
+    const MARGIN_Y = 0.5 * DPI * SCALE;
+    const CELL_W = (PW - 2 * MARGIN_X) / cols;
+    const CELL_H = (PH - 2 * MARGIN_Y) / rows;
+
+    const previewArea = document.getElementById('preview-area');
+    previewArea.innerHTML = '';
+    previewPages = [];
+
+    for (let p = 0; p < numPages; p++) {
+      const label = document.createElement('div');
+      label.className = 'page-label';
+      label.textContent = `PAGE ${p + 1} / ${numPages}`;
+      previewArea.appendChild(label);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = PW;
+      canvas.height = PH;
+      canvas.className = 'preview-page';
+      previewArea.appendChild(canvas);
+      previewPages.push(canvas);
+
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, PW, PH);
+
+      const pageSerials = serials.slice(p * perPage, (p + 1) * perPage);
+
+      pageSerials.forEach((serial, idx) => {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const cx = MARGIN_X + col * CELL_W;
+        const cy = MARGIN_Y + row * CELL_H;
+
+        // Cell border
+        if (showBorder) {
+          ctx.strokeStyle = '#ddd';
+          ctx.lineWidth = 0.5;
+          ctx.strokeRect(cx, cy, CELL_W, CELL_H);
+        }
+
+        // Generate barcode via JsBarcode on a temp canvas
+        const bCanvas = document.createElement('canvas');
+        try {
+          JsBarcode(bCanvas, serial, {
+            format: btype,
+            displayValue: false,
+            margin: 0,
+            background: 'white',
+            lineColor: '#000',
+            width: 1.5,
+            height: Math.floor(CELL_H * 0.55)
+          });
+        } catch(e) {
+          // fallback: draw error rect
+          ctx.fillStyle = '#ffeeee';
+          ctx.fillRect(cx + 4, cy + 4, CELL_W - 8, CELL_H - 8);
+          return;
+        }
+
+        const bc_w = bCanvas.width;
+        const bc_h = bCanvas.height;
+        const scale = Math.min((CELL_W - 20) / bc_w, 1);
+        const draw_w = bc_w * scale;
+        const draw_h = bc_h * scale;
+        const bx = cx + (CELL_W - draw_w) / 2;
+
+        const textH = showText ? 16 : 0;
+        const totalH = draw_h + textH + 4;
+        const by = cy + (CELL_H - totalH) / 2;
+
+        ctx.drawImage(bCanvas, bx, by, draw_w, draw_h);
+
+        if (showText) {
+          ctx.fillStyle = '#000';
+          ctx.font = `bold ${Math.floor(CELL_H * 0.09)}px monospace`;
+          ctx.textAlign = 'center';
+          ctx.fillText(serial, cx + CELL_W / 2, by + draw_h + 14);
+        }
+      });
+    }
+
+    document.getElementById('preview-pages').textContent = numPages;
+    document.getElementById('preview-serials').textContent = serials.length;
+    document.getElementById('btn-download').disabled = false;
+
+    hideLoading();
+  }, 50);
+}
+
+// ─── Download PDF ─────────────────────────────────────────────────────────
+function downloadPDF() {
+  if (previewPages.length === 0) return;
+  showLoading('BUILDING PDF...');
+
+  setTimeout(() => {
+    try {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'in', format: 'letter' });
+
+      const cols = parseInt(document.getElementById('opt-cols').value);
+      const rows = parseInt(document.getElementById('opt-rows').value);
+      const btype = document.getElementById('opt-type').value;
+      const showText = document.getElementById('toggle-text').classList.contains('on');
+      const showBorder = document.getElementById('toggle-border').classList.contains('on');
+
+      const perPage = cols * rows;
+      const MARGIN = 0.5;
+      const PAGE_W = 8.5;
+      const PAGE_H = 11;
+      const CELL_W = (PAGE_W - 2 * MARGIN) / cols;
+      const CELL_H = (PAGE_H - 2 * MARGIN) / rows;
+
+      const numPages = Math.ceil(serials.length / perPage);
+
+      for (let p = 0; p < numPages; p++) {
+        if (p > 0) pdf.addPage();
+        const pageSerials = serials.slice(p * perPage, (p + 1) * perPage);
+
+        pageSerials.forEach((serial, idx) => {
+          const col = idx % cols;
+          const row = Math.floor(idx / cols);
+          const cx = MARGIN + col * CELL_W;
+          const cy = MARGIN + row * CELL_H;
+
+          if (showBorder) {
+            pdf.setDrawColor(220, 220, 220);
+            pdf.setLineWidth(0.005);
+            pdf.rect(cx, cy, CELL_W, CELL_H);
+          }
+
+          // Barcode canvas at high res for PDF
+          const bCanvas = document.createElement('canvas');
+          try {
+            JsBarcode(bCanvas, serial, {
+              format: btype,
+              displayValue: false,
+              margin: 0,
+              background: 'white',
+              lineColor: '#000',
+              width: 2,
+              height: 80
+            });
+          } catch(e) { return; }
+
+          const PAD_X = 0.2;  // horizontal breathing room inside each cell
+          const PAD_Y = 0.15; // vertical breathing room inside each cell
+          const bc_w_in = CELL_W - PAD_X * 2;
+          const bc_h_in = CELL_H * 0.55;
+          const textH_in = showText ? 0.2 : 0;
+          const totalH = bc_h_in + textH_in;
+          const bx = cx + PAD_X;
+          const by = cy + PAD_Y + (CELL_H - PAD_Y * 2 - totalH) / 2;
+
+          const imgData = bCanvas.toDataURL('image/png');
+          pdf.addImage(imgData, 'PNG', bx, by, bc_w_in, bc_h_in);
+
+          if (showText) {
+            pdf.setFont('courier', 'bold');
+            pdf.setFontSize(7);
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(serial, cx + CELL_W / 2, by + bc_h_in + 0.14, { align: 'center' });
+          }
+        });
+      }
+
+      pdf.save('serial_barcodes.pdf');
+      hideLoading();
+    } catch(e) {
+      hideLoading();
+      showToast('PDF generation failed: ' + e.message);
+    }
+  }, 50);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+function showLoading(text) {
+  document.getElementById('loading-text').textContent = text || 'PROCESSING...';
+  document.getElementById('loading').classList.add('active');
+}
+
+function hideLoading() {
+  document.getElementById('loading').classList.remove('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
