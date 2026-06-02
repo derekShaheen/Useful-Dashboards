@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exacta Packout Test Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(165deg, #0a0e1a 0%, #111827 40%, #0f1729 100%);
+    color: #c8dae8;
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+  }
+
+  @keyframes rowIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes cardIn { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+  .header {
+    border-bottom: 1px solid rgba(80,130,200,.1);
+    padding: 28px 36px 22px;
+    background: rgba(8,12,24,.5);
+  }
+  .header-row { display:flex; align-items:center; gap:14px; margin-bottom:6px; }
+  .status-dot {
+    width:10px; height:10px; border-radius:50%;
+    background:#34d399; box-shadow:0 0 8px rgba(52,211,153,.4);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  .header h1 {
+    font-size:22px; font-weight:700;
+    font-family:'Space Grotesk',sans-serif;
+    letter-spacing:-.02em; color:#e8f0fa;
+  }
+  .header p {
+    font-size:12px; color:#5a7a9a;
+    font-family:'JetBrains Mono',monospace; letter-spacing:.02em;
+  }
+  .header-actions { display:flex; gap:8px; margin-top:14px; }
+
+  .main { padding:28px 36px; max-width:1100px; }
+
+  /* Order cards */
+  .order-card {
+    margin-bottom:20px; padding:20px;
+    background:rgba(20,30,50,.5); border-radius:10px;
+    border:1px solid rgba(80,130,200,.12);
+    animation: cardIn .25s ease-out;
+    position: relative;
+  }
+  .order-card-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:16px; gap:10px;
+  }
+  .order-badge {
+    font-size:11px; font-weight:600; letter-spacing:.08em;
+    text-transform:uppercase; color:#70b0ff;
+    font-family:'JetBrains Mono',monospace;
+    background:rgba(80,160,255,.1); padding:4px 10px; border-radius:4px;
+    border:1px solid rgba(80,160,255,.15);
+  }
+  .order-guid {
+    font-size:10px; color:#4a6080;
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  .field-row { display:flex; gap:12px; flex-wrap:wrap; align-items:end; }
+  .field-group { display:flex; flex-direction:column; gap:4px; }
+  .field-group.wide { flex:1; min-width:180px; }
+  .field-group label {
+    font-size:10px; font-weight:600; letter-spacing:.08em;
+    text-transform:uppercase; color:#6a8aaa;
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  .inp {
+    padding:8px 10px; background:rgba(10,18,30,.6);
+    border:1px solid rgba(100,150,200,.15); border-radius:5px;
+    color:#d0e0f0; font-size:13px;
+    font-family:'JetBrains Mono',monospace; outline:none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .inp:focus { border-color:rgba(80,160,255,.5); box-shadow:0 0 0 2px rgba(80,160,255,.1); }
+
+  .btn {
+    padding:7px 14px; border-radius:5px; font-size:12px;
+    font-family:'JetBrains Mono',monospace; cursor:pointer;
+    transition: all .15s; border:1px solid; white-space: nowrap;
+  }
+  .btn-blue  { background:rgba(80,160,255,.08); border-color:rgba(80,160,255,.2); color:#70b0ff; }
+  .btn-blue:hover { background:rgba(80,160,255,.18); }
+  .btn-green { background:rgba(52,211,153,.08); border-color:rgba(52,211,153,.2); color:#34d399; }
+  .btn-green:hover { background:rgba(52,211,153,.18); }
+  .btn-amber { background:rgba(245,185,60,.08); border-color:rgba(245,185,60,.2); color:#f5b93c; }
+  .btn-amber:hover { background:rgba(245,185,60,.18); }
+  .btn-sm { padding:5px 10px; font-size:11px; }
+  .btn-red-sm {
+    background:rgba(255,80,80,.08); border:1px solid rgba(255,80,80,.15); color:#ff6b6b;
+    border-radius:5px; font-size:11px; padding:5px 10px; cursor:pointer;
+    font-family:'JetBrains Mono',monospace; transition:all .15s;
+  }
+  .btn-red-sm:hover { background:rgba(255,80,80,.2); border-color:rgba(255,80,80,.3); }
+  .btn-x {
+    background:rgba(255,80,80,.1); border:1px solid rgba(255,80,80,.2); color:#ff6b6b;
+    width:24px; height:24px; display:flex; align-items:center; justify-content:center;
+    font-size:14px; padding:0; border-radius:4px; cursor:pointer; transition:all .15s;
+  }
+  .btn-x:hover { background:rgba(255,80,80,.25); border-color:rgba(255,80,80,.4); }
+  .btn-x:disabled { background:transparent; border-color:transparent; color:#334; cursor:default; }
+
+  /* Serials inside a card */
+  .serial-section { margin-top:14px; }
+  .serial-section-title {
+    font-size:10px; font-weight:600; letter-spacing:.08em;
+    text-transform:uppercase; color:#5a7a9a;
+    font-family:'JetBrains Mono',monospace; margin-bottom:8px;
+  }
+  .serial-list { display:flex; flex-direction:column; gap:4px; }
+  .serial-row {
+    display:flex; gap:8px; align-items:center;
+    padding:7px 12px; border-radius:5px;
+    border:1px solid rgba(100,140,180,.06);
+    animation: rowIn .2s ease-out;
+  }
+  .serial-row.even { background:rgba(25,35,50,.4); }
+  .serial-row.odd  { background:rgba(25,35,50,.2); }
+  .serial-num {
+    font-family:'JetBrains Mono',monospace; font-size:10px;
+    color:#5a7a9a; width:20px; text-align:center; flex-shrink:0;
+  }
+
+  .add-serial-btn {
+    display:flex; align-items:center; justify-content:center; gap:5px;
+    padding:7px 14px; width:100%;
+    background:rgba(80,160,255,.04);
+    border:1px dashed rgba(80,160,255,.18);
+    border-radius:6px; color:#5a8abb; font-size:12px;
+    font-family:'JetBrains Mono',monospace; font-weight:500;
+    cursor:pointer; transition:all .2s; margin-top:8px;
+  }
+  .add-serial-btn:hover { background:rgba(80,160,255,.1); border-color:rgba(80,160,255,.35); }
+
+  .add-order-btn {
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    padding:12px 20px; width:100%;
+    background:rgba(80,160,255,.06);
+    border:1px dashed rgba(80,160,255,.25);
+    border-radius:10px; color:#70b0ff; font-size:14px;
+    font-family:'JetBrains Mono',monospace; font-weight:500;
+    cursor:pointer; transition:all .2s; margin-bottom:32px;
+  }
+  .add-order-btn:hover { background:rgba(80,160,255,.12); border-color:rgba(80,160,255,.4); }
+
+  /* Output panel */
+  .output-panel {
+    background:rgba(8,12,24,.6); border-radius:10px;
+    border:1px solid rgba(80,130,200,.1); overflow:hidden;
+  }
+  .output-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 18px; border-bottom:1px solid rgba(80,130,200,.08);
+    background:rgba(15,20,35,.5); flex-wrap:wrap; gap:8px;
+  }
+  .tabs { display:flex; gap:2px; }
+  .tab {
+    padding:5px 16px; border-radius:4px; font-size:11px;
+    font-weight:600; font-family:'JetBrains Mono',monospace;
+    text-transform:uppercase; letter-spacing:.06em;
+    cursor:pointer; transition:all .15s;
+    background:transparent; border:1px solid transparent; color:#5a7a9a;
+  }
+  .tab.active { background:rgba(80,160,255,.15); border-color:rgba(80,160,255,.3); color:#90c8ff; }
+  .output-meta { display:flex; align-items:center; gap:10px; }
+  .msg-count { font-size:11px; color:#4a6a8a; font-family:'JetBrains Mono',monospace; }
+  .copy-btn {
+    padding:6px 16px; border-radius:5px; font-size:12px;
+    font-family:'JetBrains Mono',monospace; font-weight:500;
+    cursor:pointer; transition:all .2s; min-width:80px;
+    background:rgba(80,160,255,.1); border:1px solid rgba(80,160,255,.25); color:#70b0ff;
+  }
+  .copy-btn:hover { background:rgba(80,160,255,.2); }
+  .copy-btn.copied { background:rgba(52,211,153,.15); border-color:rgba(52,211,153,.3); color:#34d399; }
+
+  .output-pre {
+    margin:0; padding:18px; font-size:12.5px;
+    font-family:'JetBrains Mono',monospace;
+    line-height:1.65; color:#a0c4e0;
+    overflow-x:auto; max-height:600px;
+    white-space:pre-wrap; word-break:break-all;
+  }
+  .output-pre::-webkit-scrollbar { width:6px; height:6px; }
+  .output-pre::-webkit-scrollbar-track { background:rgba(0,0,0,.2); border-radius:3px; }
+  .output-pre::-webkit-scrollbar-thumb { background:rgba(80,160,255,.25); border-radius:3px; }
+
+  .ref {
+    margin-top:28px; padding:16px 20px;
+    background:rgba(20,30,50,.3); border-radius:8px;
+    border:1px solid rgba(80,130,200,.06); font-size:11.5px;
+    font-family:'JetBrains Mono',monospace; color:#4a6a8a; line-height:1.8;
+  }
+  .ref b { color:#5a8aaa; font-weight:600; }
+  .ref .sep { margin:0 10px; color:#2a3a4a; }
+  .ref .dot { margin:0 8px; color:#2a3a4a; }
+  .ref .fld { color:#5a7a9a; }
+
+  input[type=number]::-webkit-inner-spin-button { opacity:.3; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div class="status-dot"></div>
+    <h1>Exacta Packout Test Builder</h1>
+  </div>
+  <p>Build Exacta packout ITEMSTATUS messages</p>
+  <div class="header-actions">
+    <button class="btn btn-green" onclick="fillSample()">Sample Data</button>
+    <button class="btn btn-amber" onclick="clearAll()">Clear All</button>
+  </div>
+</div>
+
+<div class="main">
+  <div id="orders"></div>
+  <button class="add-order-btn" onclick="addOrder()">+ Add Order Message</button>
+
+  <!-- Output -->
+  <div class="output-panel">
+    <div class="output-header">
+      <div class="tabs">
+        <button class="tab active" data-mode="postman" onclick="setMode('postman')">Postman</button>
+        <button class="tab" data-mode="sql" onclick="setMode('sql')">SQL INSERT</button>
+        <button class="tab" data-mode="json" onclick="setMode('json')">JSON Only</button>
+      </div>
+      <div class="output-meta">
+        <span id="msgCount" class="msg-count"></span>
+        <button id="copyBtn" class="copy-btn" onclick="copyOutput()">Copy</button>
+      </div>
+    </div>
+    <pre id="output" class="output-pre"></pre>
+  </div>
+
+  <div class="ref">
+    <b>Message Structure</b><span class="sep">│</span>
+    Each message = 1 ITEMSTATUS record<span class="dot">·</span>
+    <span class="fld">message_type</span>: ITEMSTATUS<span class="dot">·</span>
+    <span class="fld">order_id</span> = <span class="fld">outbound_container_id</span> (SSCC)<span class="dot">·</span>
+    <span class="fld">packed_qty</span> auto-syncs to serial count
+  </div>
+</div>
+
+<script>
+const state = {
+  orders: [],
+  mode: 'postman',
+};
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function uuid() { return crypto.randomUUID().toUpperCase(); }
+function esc(s) { return (s || '').replace(/'/g, "''"); }
+
+function now() {
+  const d = new Date();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  const yy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mi = String(d.getMinutes()).padStart(2,'0');
+  const ss = String(d.getSeconds()).padStart(2,'0');
+  return `${mm}${dd}${yy}${hh}${mi}${ss}`;
+}
+
+function el(id) { return document.getElementById(id); }
+
+function addOrder(data) {
+  const order = data || {
+    _id: uid(),
+    guid: uuid(),
+    order_id: '',
+    container_id: '',
+    location_id: 'X',
+    packed_qty: 1,
+    serials: [{ _id: uid(), serial_number: '' }],
+  };
+  state.orders.push(order);
+  render();
+}
+
+function removeOrder(oid) {
+  state.orders = state.orders.filter(o => o._id !== oid);
+  render();
+}
+
+function duplicateOrder(oid) {
+  const src = state.orders.find(o => o._id === oid);
+  if (!src) return;
+  const clone = {
+    ...src,
+    _id: uid(),
+    guid: uuid(),
+    serials: src.serials.map(s => ({ ...s, _id: uid() })),
+  };
+  const idx = state.orders.indexOf(src);
+  state.orders.splice(idx + 1, 0, clone);
+  render();
+}
+
+function updateOrder(oid, key, val) {
+  const o = state.orders.find(o => o._id === oid);
+  if (!o) return;
+  o[key] = val;
+  o.guid = uuid(); // new guid on any change
+  renderOutput();
+}
+
+function addSerial(oid) {
+  const o = state.orders.find(o => o._id === oid);
+  if (!o) return;
+  o.serials.push({ _id: uid(), serial_number: '' });
+  o.packed_qty = o.serials.length;
+  o.guid = uuid();
+  render();
+}
+
+function removeSerial(oid, sid) {
+  const o = state.orders.find(o => o._id === oid);
+  if (!o) return;
+  o.serials = o.serials.filter(s => s._id !== sid);
+  o.packed_qty = o.serials.filter(s => s.serial_number.trim()).length || o.serials.length;
+  o.guid = uuid();
+  render();
+}
+
+function updateSerial(oid, sid, val) {
+  const o = state.orders.find(o => o._id === oid);
+  if (!o) return;
+  const s = o.serials.find(s => s._id === sid);
+  if (s) s.serial_number = val;
+  o.packed_qty = o.serials.filter(s => s.serial_number.trim()).length || o.serials.length;
+  o.guid = uuid();
+  renderOutput();
+}
+
+function clearAll() {
+  state.orders = [];
+  addOrder();
+}
+
+function fillSample() {
+  state.orders = [];
+  addOrder({
+    _id: uid(), guid: uuid(),
+    order_id: '00000509460508269181',
+    container_id: '',
+    location_id: 'X',
+    packed_qty: 2,
+    serials: [
+      { _id: uid(), serial_number: 'YJF0101453' },
+      { _id: uid(), serial_number: 'YJF0101454' },
+    ],
+  });
+  addOrder({
+    _id: uid(), guid: uuid(),
+    order_id: '00000509460508269182',
+    container_id: '',
+    location_id: 'X',
+    packed_qty: 1,
+    serials: [
+      { _id: uid(), serial_number: 'YJF0101500' },
+    ],
+  });
+}
+
+function setMode(m) {
+  state.mode = m;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.mode === m);
+  });
+  renderOutput();
+}
+
+function buildJsonForOrder(o) {
+  const sscc = o.order_id.trim();
+  return {
+    records: [{
+      message_type: 'ITEMSTATUS',
+      mode: '1',
+      order_id: sscc,
+      line_item_id: 1,
+      state: 'COMPLETED',
+      location_id: o.location_id.trim() || 'X',
+      outbound_container_id: sscc,
+      packed_qty: o.packed_qty || o.serials.length,
+      timestamp: now(),
+      serial_numbers: o.serials
+        .filter(s => s.serial_number.trim())
+        .map(s => ({ serial_number: s.serial_number.trim() })),
+    }]
+  };
+}
+
+function buildSqlForOrder(o) {
+  const hg = esc(o.guid);
+  const jsonObj = buildJsonForOrder(o);
+  const jsonStr = JSON.stringify(jsonObj, null, 2);
+  const escapedJson = jsonStr.replace(/'/g, "''");
+
+  return `INSERT INTO t_alr_import_message
+    (host_group_id, insert_date, status, import_type, json, error_msg)
+VALUES
+(
+    N'${hg}',
+    GETDATE(),
+    N'N',
+    N'ITEMSTATUS',
+    N'${escapedJson}',
+    NULL
+);`;
+}
+
+function buildPostmanBody() {
+  // Combine every order's record into a single request body.
+  const records = state.orders.flatMap(o => buildJsonForOrder(o).records);
+  return {
+    params: {
+      json: {
+        records: records
+      }
+    }
+  };
+}
+
+function renderOutput() {
+  const n = state.orders.length;
+  const totalSerials = state.orders.reduce((sum, o) => sum + o.serials.length, 0);
+  el('msgCount').textContent = n + ' message' + (n !== 1 ? 's' : '') + ', ' + totalSerials + ' serial' + (totalSerials !== 1 ? 's' : '');
+
+  if (state.mode === 'postman') {
+    el('output').textContent = JSON.stringify(buildPostmanBody(), null, 4);
+  } else if (state.mode === 'json') {
+    const allJson = state.orders.map(o => buildJsonForOrder(o));
+    el('output').textContent = JSON.stringify(allJson, null, 2);
+  } else {
+    el('output').textContent = state.orders.map(o => buildSqlForOrder(o)).join('\n\n');
+  }
+
+  // Update guid displays
+  state.orders.forEach(o => {
+    const guidEl = document.getElementById('guid-' + o._id);
+    if (guidEl) guidEl.textContent = o.guid;
+  });
+}
+
+function render() {
+  const container = el('orders');
+  let html = '';
+
+  state.orders.forEach((o, oi) => {
+    html += `<div class="order-card">`;
+
+    // Header
+    html += `<div class="order-card-header">`;
+    html += `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">`;
+    html += `<span class="order-badge">Message ${oi+1}</span>`;
+    html += `<span class="order-guid" id="guid-${o._id}">${o.guid}</span>`;
+    html += `</div>`;
+    html += `<div style="display:flex;gap:6px;">`;
+    html += `<button class="btn btn-blue btn-sm" onclick="duplicateOrder('${o._id}')">Duplicate</button>`;
+    const canRemove = state.orders.length > 1;
+    html += `<button class="btn-red-sm" ${canRemove ? '' : 'disabled style="opacity:.3;cursor:default;"'} onclick="removeOrder('${o._id}')">Remove</button>`;
+    html += `</div></div>`;
+
+    // Fields
+    html += `<div class="field-row">`;
+    html += `<div class="field-group wide">`;
+    html += `<label>Outbound Container SSCC</label>`;
+    html += `<input class="inp" style="width:100%;" value="${o.order_id}" placeholder="e.g. 00000509460508269181" oninput="updateOrder('${o._id}','order_id',this.value)" />`;
+    html += `</div>`;
+    html += `<div class="field-group">`;
+    html += `<label>Location</label>`;
+    html += `<input class="inp" style="width:90px;" value="${o.location_id}" oninput="updateOrder('${o._id}','location_id',this.value)" />`;
+    html += `</div>`;
+    html += `<div class="field-group">`;
+    html += `<label>Packed Qty</label>`;
+    html += `<input class="inp" type="number" style="width:70px;" value="${o.packed_qty}" oninput="updateOrder('${o._id}','packed_qty',parseInt(this.value)||0)" />`;
+    html += `</div>`;
+    html += `</div>`;
+
+    // Serials
+    html += `<div class="serial-section">`;
+    html += `<div class="serial-section-title">Serial Numbers</div>`;
+    html += `<div class="serial-list">`;
+    o.serials.forEach((s, si) => {
+      const parity = si % 2 === 0 ? 'even' : 'odd';
+      html += `<div class="serial-row ${parity}">`;
+      html += `<span class="serial-num">${si+1}</span>`;
+      html += `<input class="inp" style="flex:1;" value="${s.serial_number}" placeholder="e.g. YJF0101453" oninput="updateSerial('${o._id}','${s._id}',this.value)" />`;
+      const canRm = o.serials.length > 1;
+      html += `<button class="btn-x" ${canRm ? '' : 'disabled'} onclick="removeSerial('${o._id}','${s._id}')">×</button>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+    html += `<button class="add-serial-btn" onclick="addSerial('${o._id}')">+ Add Serial</button>`;
+    html += `</div>`;
+
+    html += `</div>`; // end card
+  });
+
+  container.innerHTML = html;
+  renderOutput();
+}
+
+async function copyOutput() {
+  const text = el('output').textContent;
+  const btn = el('copyBtn');
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch(e) {
+    const range = document.createRange();
+    range.selectNodeContents(el('output'));
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(range);
+    document.execCommand('copy'); sel.removeAllRanges();
+  }
+  btn.textContent = '✓ Copied';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+}
+
+// Start with one empty order
+addOrder();
+</script>
+</body>
+</html>
