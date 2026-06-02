@@ -3,6 +3,7 @@
 A self-contained HTML tool for generating printable barcode sheets from a serial number range. No installation, no server — just open the file in a browser.
 
 ## Usage
+**Live page:** [Barcode Generator](https://derekshaheen.github.io/Useful-Dashboards/Batch-Serial-Barcode-Generator/index.html)
 
 1. Open `barcode-generator.html` in any modern browser
 2. Enter a **Start Serial** and **End Serial** (e.g. `WHF1180286` → `WHF1180325`)
