@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Useful Dashboards</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #70b0ff;
+    --green: #34d399;
+    --yellow: #e8ff00;
+    --cyan: #00d4ff;
+    --text: #c8dae8;
+    --muted: #5a7a9a;
+    --dim: #4a6080;
+  }
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 500px at 15% -10%, rgba(80,130,200,.12), transparent 60%),
+      radial-gradient(800px 600px at 95% 110%, rgba(52,211,153,.07), transparent 55%),
+      linear-gradient(165deg, #0a0e1a 0%, #111827 45%, #0f1729 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 24px 80px;
+  }
+
+  /* grain / scanline texture */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
+    mix-blend-mode: overlay;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+  @keyframes cardIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes headIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+  .wrap { width: 100%; max-width: 960px; position: relative; z-index: 1; }
+
+  /* Header */
+  header {
+    padding: 80px 0 36px;
+    border-bottom: 1px solid rgba(80,130,200,.12);
+    animation: headIn .5s ease-out;
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 20px;
+  }
+  .status-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 8px rgba(52,211,153,.5);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(38px, 7vw, 64px); font-weight: 700;
+    letter-spacing: -.03em; line-height: 1;
+    color: #eef4fc;
+  }
+  header h1 .slash { color: var(--blue); }
+  header p {
+    margin-top: 18px; max-width: 560px;
+    font-size: 15px; line-height: 1.6; color: var(--muted);
+  }
+  .repo-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 22px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--dim); text-decoration: none;
+    border: 1px solid rgba(80,130,200,.15); border-radius: 6px;
+    padding: 7px 13px; transition: all .18s;
+  }
+  .repo-link:hover { color: var(--blue); border-color: rgba(80,160,255,.4); }
+
+  /* Cards */
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
+    gap: 22px; margin-top: 48px;
+  }
+  .card {
+    position: relative; display: flex; flex-direction: column;
+    background: rgba(20,30,50,.5);
+    border: 1px solid rgba(80,130,200,.14); border-radius: 14px;
+    padding: 28px 26px 24px; text-decoration: none; color: inherit;
+    overflow: hidden;
+    transition: transform .2s ease, border-color .2s, box-shadow .2s;
+    animation: cardIn .55s ease-out both;
+  }
+  .card:nth-child(1) { animation-delay: .08s; }
+  .card:nth-child(2) { animation-delay: .16s; }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--c); opacity: .8;
+  }
+  .card::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(420px 200px at 80% -20%, var(--glow), transparent 70%);
+    opacity: 0; transition: opacity .25s;
+  }
+  .card:hover { transform: translateY(-5px); border-color: var(--c); box-shadow: 0 18px 40px -22px var(--glow); }
+  .card:hover::after { opacity: 1; }
+
+  .card-tag {
+    align-self: flex-start;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--c);
+    background: var(--chip); border: 1px solid var(--cbord);
+    padding: 4px 10px; border-radius: 5px;
+  }
+  .card h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 23px; font-weight: 700; letter-spacing: -.02em;
+    margin: 18px 0 10px; color: #e8f0fa;
+  }
+  .card p { font-size: 13.5px; line-height: 1.6; color: var(--muted); flex: 1; }
+  .card-meta {
+    display: flex; flex-wrap: wrap; gap: 7px; margin-top: 18px;
+  }
+  .chip {
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+    color: var(--dim);
+    border: 1px solid rgba(80,130,200,.12); border-radius: 4px;
+    padding: 3px 8px;
+  }
+  .card-go {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 22px; padding-top: 18px;
+    border-top: 1px solid rgba(80,130,200,.1);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600;
+    letter-spacing: .04em; color: var(--c);
+  }
+  .card-go .arrow { transition: transform .2s; }
+  .card:hover .card-go .arrow { transform: translateX(5px); }
+
+  /* per-card theming */
+  .exacta  { --c: var(--blue);   --glow: rgba(80,160,255,.16);  --chip: rgba(80,160,255,.1);  --cbord: rgba(80,160,255,.2); }
+  .barcode { --c: var(--yellow); --glow: rgba(232,255,0,.10);   --chip: rgba(232,255,0,.07);  --cbord: rgba(232,255,0,.22); }
+
+  footer {
+    margin-top: 56px; padding-top: 24px;
+    border-top: 1px solid rgba(80,130,200,.1);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--dim); letter-spacing: .03em;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--blue); }
+
+  @media (max-width: 560px) { header { padding-top: 56px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="eyebrow"><span class="status-dot"></span>Live · GitHub Pages</span>
+    <h1>Useful <span class="slash">/</span> Dashboards</h1>
+    <p>A small collection of self-contained, browser-based tools for warehouse &amp; WMS work. Each one is a single HTML file — no build step, no server, nothing uploaded. Pick a tool below.</p>
+    <a class="repo-link" href="https://github.com/derekShaheen/Useful-Dashboards" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      derekShaheen/Useful-Dashboards
+    </a>
+  </header>
+
+  <div class="grid">
+
+    <a class="card exacta" href="https://derekshaheen.github.io/Useful-Dashboards/Bastian-Packout-Msg-Generator/exacta-packout.html">
+      <span class="card-tag">Packout · Test Data</span>
+      <h2>Exacta Packout Test Builder</h2>
+      <p>Build <code>ITEMSTATUS</code> packout messages for the Exacta pipeline through a card-based UI. Set SSCC, location, packed qty, and serials per message, then export them all as one payload.</p>
+      <div class="card-meta">
+        <span class="chip">Postman body</span>
+        <span class="chip">SQL INSERT</span>
+        <span class="chip">Raw JSON</span>
+      </div>
+      <span class="card-go">Open tool <span class="arrow">→</span></span>
+    </a>
+
+    <a class="card barcode" href="https://derekshaheen.github.io/Useful-Dashboards/Batch-Serial-Barcode-Generator/index.html">
+      <span class="card-tag">Barcodes · PDF</span>
+      <h2>Serial Barcode Generator</h2>
+      <p>Generate print-ready barcode sheets from a serial range. Validates the prefix + numeric pattern, previews the layout, and exports a Letter-size PDF entirely in-browser.</p>
+      <div class="card-meta">
+        <span class="chip">Code 128 / 39</span>
+        <span class="chip">Custom layout</span>
+        <span class="chip">Up to 5,000</span>
+      </div>
+      <span class="card-go">Open tool <span class="arrow">→</span></span>
+    </a>
+
+  </div>
+
+  <footer>
+    <span>// self-contained · no dependencies to install</span>
+    <span><a href="https://github.com/derekShaheen/Useful-Dashboards/blob/main/LICENSE">GPL-2.0</a></span>
+  </footer>
+
+</div>
+</body>
+</html>
