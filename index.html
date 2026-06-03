@@ -85,11 +85,58 @@
   }
   .repo-link:hover { color: var(--blue); border-color: rgba(80,160,255,.4); }
 
+  /* Search */
+  .searchbar {
+    margin-top: 44px;
+    animation: cardIn .5s ease-out both; animation-delay: .04s;
+  }
+  .search-field { position: relative; display: flex; align-items: center; }
+  .search-field svg {
+    position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+    color: var(--dim); pointer-events: none;
+  }
+  #search {
+    width: 100%; padding: 14px 44px 14px 44px;
+    background: rgba(10,18,30,.6);
+    border: 1px solid rgba(80,130,200,.16); border-radius: 10px;
+    color: var(--text); font-size: 14px;
+    font-family: 'JetBrains Mono', monospace; letter-spacing: .01em;
+    outline: none; transition: border-color .2s, box-shadow .2s;
+  }
+  #search::placeholder { color: var(--dim); }
+  #search:focus { border-color: rgba(80,160,255,.5); box-shadow: 0 0 0 3px rgba(80,160,255,.1); }
+  .search-clear {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: rgba(80,130,200,.1); border: 1px solid rgba(80,130,200,.18);
+    color: var(--muted); width: 24px; height: 24px; border-radius: 6px;
+    font-size: 13px; cursor: pointer; display: none;
+    align-items: center; justify-content: center; transition: all .15s;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .search-clear:hover { color: var(--blue); border-color: rgba(80,160,255,.4); }
+  .search-clear.visible { display: flex; }
+  .result-count {
+    margin-top: 10px; min-height: 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: .04em; color: var(--dim);
+  }
+
   /* Cards */
   .grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
-    gap: 22px; margin-top: 48px;
+    gap: 22px; margin-top: 22px;
   }
+  .grid.hidden { display: none; }
+
+  /* No results */
+  .empty {
+    display: none; margin-top: 40px; text-align: center;
+    font-family: 'JetBrains Mono', monospace; color: var(--muted);
+    animation: cardIn .3s ease-out;
+  }
+  .empty.visible { display: block; }
+  .empty .big { font-size: 15px; color: var(--text); margin-bottom: 6px; }
+  .empty .small { font-size: 12px; color: var(--dim); }
   .card {
     position: relative; display: flex; flex-direction: column;
     background: rgba(20,30,50,.5);
@@ -176,6 +223,15 @@
     </a>
   </header>
 
+  <div class="searchbar">
+    <div class="search-field">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="search" type="text" placeholder="Search tools…" autocomplete="off" spellcheck="false" aria-label="Search tools">
+      <button class="search-clear" id="searchClear" aria-label="Clear search">✕</button>
+    </div>
+    <div class="result-count" id="resultCount"></div>
+  </div>
+
   <div class="grid">
 
     <a class="card exacta" href="https://derekshaheen.github.io/Useful-Dashboards/Bastian-Packout-Msg-Generator/exacta-packout.html">
@@ -204,11 +260,63 @@
 
   </div>
 
+  <div class="empty" id="empty">
+    <div class="big">No tools match that search.</div>
+    <div class="small">Try a different term, or clear the search.</div>
+  </div>
+
   <footer>
     <span>// self-contained · no dependencies to install</span>
     <span><a href="https://github.com/derekShaheen/Useful-Dashboards/blob/main/LICENSE">GPL-2.0</a></span>
   </footer>
 
 </div>
+<script>
+  (function () {
+    var input = document.getElementById('search');
+    var clear = document.getElementById('searchClear');
+    var count = document.getElementById('resultCount');
+    var grid  = document.querySelector('.grid');
+    var empty = document.getElementById('empty');
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+
+    // Precompute searchable text for each card once.
+    cards.forEach(function (c) {
+      c.dataset.search = c.textContent.replace(/\s+/g, ' ').trim().toLowerCase();
+    });
+
+    function apply() {
+      var q = input.value.trim().toLowerCase();
+      clear.classList.toggle('visible', q.length > 0);
+
+      var shown = 0;
+      cards.forEach(function (c) {
+        var match = q === '' || c.dataset.search.indexOf(q) !== -1;
+        c.style.display = match ? '' : 'none';
+        if (match) shown++;
+      });
+
+      grid.classList.toggle('hidden', shown === 0);
+      empty.classList.toggle('visible', shown === 0);
+
+      if (q === '') {
+        count.textContent = '';
+      } else {
+        count.textContent = shown + (shown === 1 ? ' tool' : ' tools') + ' matching "' + input.value.trim() + '"';
+      }
+    }
+
+    input.addEventListener('input', apply);
+    clear.addEventListener('click', function () {
+      input.value = '';
+      apply();
+      input.focus();
+    });
+    // Esc clears the field.
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && input.value) { input.value = ''; apply(); }
+    });
+  })();
+</script>
 </body>
 </html>
