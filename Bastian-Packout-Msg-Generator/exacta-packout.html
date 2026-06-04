@@ -382,6 +382,28 @@ function addSerial(oid) {
   render();
 }
 
+// Insert a new serial directly after the given one, then focus it.
+function addSerialAfter(oid, sid) {
+  const o = state.orders.find(o => o._id === oid);
+  if (!o) return;
+  const idx = o.serials.findIndex(s => s._id === sid);
+  const ns = { _id: uid(), serial_number: '' };
+  o.serials.splice(idx + 1, 0, ns);
+  o.packed_qty = o.serials.length;
+  o.guid = uuid();
+  render();
+  const inp = document.getElementById('serial-inp-' + ns._id);
+  if (inp) inp.focus();
+}
+
+// Enter in a serial field adds the next line; blank fields are ignored.
+function serialKeydown(e, oid, sid) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  if (!e.target.value.trim()) return;
+  addSerialAfter(oid, sid);
+}
+
 function removeSerial(oid, sid) {
   const o = state.orders.find(o => o._id === oid);
   if (!o) return;
@@ -557,7 +579,7 @@ function render() {
       const parity = si % 2 === 0 ? 'even' : 'odd';
       html += `<div class="serial-row ${parity}">`;
       html += `<span class="serial-num">${si+1}</span>`;
-      html += `<input class="inp" style="flex:1;" value="${s.serial_number}" placeholder="e.g. YJF0101453" oninput="updateSerial('${o._id}','${s._id}',this.value)" />`;
+      html += `<input class="inp" id="serial-inp-${s._id}" style="flex:1;" value="${s.serial_number}" placeholder="e.g. YJF0101453" oninput="updateSerial('${o._id}','${s._id}',this.value)" onkeydown="serialKeydown(event,'${o._id}','${s._id}')" />`;
       const canRm = o.serials.length > 1;
       html += `<button class="btn-x" ${canRm ? '' : 'disabled'} onclick="removeSerial('${o._id}','${s._id}')">×</button>`;
       html += `</div>`;
