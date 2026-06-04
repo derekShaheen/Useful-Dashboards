@@ -4,230 +4,287 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Exacta Packout Test Builder</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap');
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --accent: #70b0ff;
+    --accent2: #00d4ff;
+    --text: #f0f0f0;
+    --muted: #666;
+    --danger: #ff4444;
+    --success: #00ff88;
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
     min-height: 100vh;
-    background: linear-gradient(165deg, #0a0e1a 0%, #111827 40%, #0f1729 100%);
-    color: #c8dae8;
-    font-family: 'Segoe UI', -apple-system, sans-serif;
   }
 
   @keyframes rowIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
   @keyframes cardIn { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-  .header {
-    border-bottom: 1px solid rgba(80,130,200,.1);
-    padding: 28px 36px 22px;
-    background: rgba(8,12,24,.5);
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-wrap: wrap;
+    gap: 14px;
   }
-  .header-row { display:flex; align-items:center; gap:14px; margin-bottom:6px; }
+  .logo { display: flex; align-items: baseline; gap: 10px; }
+  .logo-mark {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--accent);
+    letter-spacing: 3px; text-transform: uppercase;
+    border: 1px solid var(--accent); padding: 3px 8px;
+  }
+  .logo-title {
+    font-size: 22px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  .header-right { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .status-bar {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--muted); letter-spacing: 1px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .status-bar span.count { color: var(--accent2); }
   .status-dot {
-    width:10px; height:10px; border-radius:50%;
-    background:#34d399; box-shadow:0 0 8px rgba(52,211,153,.4);
-    animation: pulse 2.5s ease-in-out infinite;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success); box-shadow: 0 0 8px rgba(0,255,136,.5);
+    animation: pulse 2.2s ease-in-out infinite;
   }
-  .header h1 {
-    font-size:22px; font-weight:700;
-    font-family:'Space Grotesk',sans-serif;
-    letter-spacing:-.02em; color:#e8f0fa;
-  }
-  .header p {
-    font-size:12px; color:#5a7a9a;
-    font-family:'JetBrains Mono',monospace; letter-spacing:.02em;
-  }
-  .header-actions { display:flex; gap:8px; margin-top:14px; }
+  .header-actions { display: flex; gap: 8px; }
 
-  .main { padding:28px 36px; max-width:1100px; }
+  /* Main */
+  .main { padding: 28px 32px; max-width: 1120px; margin: 0 auto; }
+
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 3px; color: var(--muted);
+    text-transform: uppercase; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .section-label.spaced { margin-top: 30px; }
 
   /* Order cards */
   .order-card {
-    margin-bottom:20px; padding:20px;
-    background:rgba(20,30,50,.5); border-radius:10px;
-    border:1px solid rgba(80,130,200,.12);
+    margin-bottom: 14px; padding: 18px 20px 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 2px; position: relative;
     animation: cardIn .25s ease-out;
-    position: relative;
+  }
+  .order-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 2px; background: var(--accent); opacity: .45;
   }
   .order-card-header {
-    display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:16px; gap:10px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; gap: 10px;
   }
   .order-badge {
-    font-size:11px; font-weight:600; letter-spacing:.08em;
-    text-transform:uppercase; color:#70b0ff;
-    font-family:'JetBrains Mono',monospace;
-    background:rgba(80,160,255,.1); padding:4px 10px; border-radius:4px;
-    border:1px solid rgba(80,160,255,.15);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); border: 1px solid var(--accent); padding: 3px 9px;
   }
   .order-guid {
-    font-size:10px; color:#4a6080;
-    font-family:'JetBrains Mono',monospace;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; color: var(--muted); letter-spacing: .5px;
   }
 
-  .field-row { display:flex; gap:12px; flex-wrap:wrap; align-items:end; }
-  .field-group { display:flex; flex-direction:column; gap:4px; }
-  .field-group.wide { flex:1; min-width:180px; }
+  .field-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+  .field-group.wide { flex: 1; min-width: 200px; }
   .field-group label {
-    font-size:10px; font-weight:600; letter-spacing:.08em;
-    text-transform:uppercase; color:#6a8aaa;
-    font-family:'JetBrains Mono',monospace;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted);
   }
 
   .inp {
-    padding:8px 10px; background:rgba(10,18,30,.6);
-    border:1px solid rgba(100,150,200,.15); border-radius:5px;
-    color:#d0e0f0; font-size:13px;
-    font-family:'JetBrains Mono',monospace; outline:none;
-    transition: border-color .2s, box-shadow .2s;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; padding: 8px 10px; border-radius: 2px;
+    outline: none; transition: border-color .2s; letter-spacing: 1px;
   }
-  .inp:focus { border-color:rgba(80,160,255,.5); box-shadow:0 0 0 2px rgba(80,160,255,.1); }
+  .inp:focus { border-color: var(--accent); }
 
+  /* Buttons */
   .btn {
-    padding:7px 14px; border-radius:5px; font-size:12px;
-    font-family:'JetBrains Mono',monospace; cursor:pointer;
-    transition: all .15s; border:1px solid; white-space: nowrap;
+    padding: 7px 14px; border-radius: 2px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; cursor: pointer;
+    transition: all .15s; border: 1px solid; background: transparent;
+    white-space: nowrap;
   }
-  .btn-blue  { background:rgba(80,160,255,.08); border-color:rgba(80,160,255,.2); color:#70b0ff; }
-  .btn-blue:hover { background:rgba(80,160,255,.18); }
-  .btn-green { background:rgba(52,211,153,.08); border-color:rgba(52,211,153,.2); color:#34d399; }
-  .btn-green:hover { background:rgba(52,211,153,.18); }
-  .btn-amber { background:rgba(245,185,60,.08); border-color:rgba(245,185,60,.2); color:#f5b93c; }
-  .btn-amber:hover { background:rgba(245,185,60,.18); }
-  .btn-sm { padding:5px 10px; font-size:11px; }
-  .btn-red-sm {
-    background:rgba(255,80,80,.08); border:1px solid rgba(255,80,80,.15); color:#ff6b6b;
-    border-radius:5px; font-size:11px; padding:5px 10px; cursor:pointer;
-    font-family:'JetBrains Mono',monospace; transition:all .15s;
-  }
-  .btn-red-sm:hover { background:rgba(255,80,80,.2); border-color:rgba(255,80,80,.3); }
-  .btn-x {
-    background:rgba(255,80,80,.1); border:1px solid rgba(255,80,80,.2); color:#ff6b6b;
-    width:24px; height:24px; display:flex; align-items:center; justify-content:center;
-    font-size:14px; padding:0; border-radius:4px; cursor:pointer; transition:all .15s;
-  }
-  .btn-x:hover { background:rgba(255,80,80,.25); border-color:rgba(255,80,80,.4); }
-  .btn-x:disabled { background:transparent; border-color:transparent; color:#334; cursor:default; }
+  .btn-blue  { border-color: var(--accent2); color: var(--accent2); }
+  .btn-blue:hover { background: var(--accent2); color: var(--bg); }
+  .btn-green { border-color: var(--success); color: var(--success); }
+  .btn-green:hover { background: var(--success); color: var(--bg); }
+  .btn-amber { border-color: var(--danger); color: var(--danger); }
+  .btn-amber:hover { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 5px 11px; font-size: 12px; letter-spacing: 1px; }
 
-  /* Serials inside a card */
-  .serial-section { margin-top:14px; }
-  .serial-section-title {
-    font-size:10px; font-weight:600; letter-spacing:.08em;
-    text-transform:uppercase; color:#5a7a9a;
-    font-family:'JetBrains Mono',monospace; margin-bottom:8px;
+  .btn-red-sm {
+    background: transparent; border: 1px solid var(--danger); color: var(--danger);
+    border-radius: 2px; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    padding: 5px 11px; cursor: pointer; transition: all .15s;
   }
-  .serial-list { display:flex; flex-direction:column; gap:4px; }
+  .btn-red-sm:hover { background: var(--danger); color: #fff; }
+
+  .btn-x {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; padding: 0; border-radius: 2px; cursor: pointer; transition: all .15s;
+    flex-shrink: 0;
+  }
+  .btn-x:hover { border-color: var(--danger); color: var(--danger); }
+  .btn-x:disabled { opacity: .25; cursor: default; border-color: var(--border); color: var(--muted); }
+
+  /* Serials */
+  .serial-section { margin-top: 16px; }
+  .serial-section-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .serial-list { display: flex; flex-direction: column; gap: 4px; }
   .serial-row {
-    display:flex; gap:8px; align-items:center;
-    padding:7px 12px; border-radius:5px;
-    border:1px solid rgba(100,140,180,.06);
+    display: flex; gap: 8px; align-items: center;
+    padding: 6px 10px; border: 1px solid var(--border); border-radius: 2px;
     animation: rowIn .2s ease-out;
   }
-  .serial-row.even { background:rgba(25,35,50,.4); }
-  .serial-row.odd  { background:rgba(25,35,50,.2); }
+  .serial-row.even { background: var(--surface2); }
+  .serial-row.odd  { background: rgba(255,255,255,.02); }
   .serial-num {
-    font-family:'JetBrains Mono',monospace; font-size:10px;
-    color:#5a7a9a; width:20px; text-align:center; flex-shrink:0;
+    font-family: 'Share Tech Mono', monospace; font-size: 10px;
+    color: var(--accent2); width: 22px; text-align: center; flex-shrink: 0;
   }
 
   .add-serial-btn {
-    display:flex; align-items:center; justify-content:center; gap:5px;
-    padding:7px 14px; width:100%;
-    background:rgba(80,160,255,.04);
-    border:1px dashed rgba(80,160,255,.18);
-    border-radius:6px; color:#5a8abb; font-size:12px;
-    font-family:'JetBrains Mono',monospace; font-weight:500;
-    cursor:pointer; transition:all .2s; margin-top:8px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 7px 14px; width: 100%;
+    background: transparent; border: 1px dashed var(--border); border-radius: 2px;
+    color: var(--muted); font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; transition: all .2s; margin-top: 8px;
   }
-  .add-serial-btn:hover { background:rgba(80,160,255,.1); border-color:rgba(80,160,255,.35); }
+  .add-serial-btn:hover { border-color: var(--accent); color: var(--accent); }
 
   .add-order-btn {
-    display:flex; align-items:center; justify-content:center; gap:6px;
-    padding:12px 20px; width:100%;
-    background:rgba(80,160,255,.06);
-    border:1px dashed rgba(80,160,255,.25);
-    border-radius:10px; color:#70b0ff; font-size:14px;
-    font-family:'JetBrains Mono',monospace; font-weight:500;
-    cursor:pointer; transition:all .2s; margin-bottom:32px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 20px; width: 100%;
+    background: transparent; border: 1px dashed var(--accent); border-radius: 2px;
+    color: var(--accent); font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; transition: all .2s; margin-bottom: 6px;
   }
-  .add-order-btn:hover { background:rgba(80,160,255,.12); border-color:rgba(80,160,255,.4); }
+  .add-order-btn:hover { background: rgba(80,160,255,.1); }
 
   /* Output panel */
   .output-panel {
-    background:rgba(8,12,24,.6); border-radius:10px;
-    border:1px solid rgba(80,130,200,.1); overflow:hidden;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 2px; overflow: hidden;
   }
   .output-header {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px 18px; border-bottom:1px solid rgba(80,130,200,.08);
-    background:rgba(15,20,35,.5); flex-wrap:wrap; gap:8px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px; border-bottom: 1px solid var(--border);
+    background: var(--surface2); flex-wrap: wrap; gap: 10px;
   }
-  .tabs { display:flex; gap:2px; }
+  .tabs { display: flex; gap: 4px; }
   .tab {
-    padding:5px 16px; border-radius:4px; font-size:11px;
-    font-weight:600; font-family:'JetBrains Mono',monospace;
-    text-transform:uppercase; letter-spacing:.06em;
-    cursor:pointer; transition:all .15s;
-    background:transparent; border:1px solid transparent; color:#5a7a9a;
+    padding: 6px 16px; border-radius: 2px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; transition: all .15s;
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
   }
-  .tab.active { background:rgba(80,160,255,.15); border-color:rgba(80,160,255,.3); color:#90c8ff; }
-  .output-meta { display:flex; align-items:center; gap:10px; }
-  .msg-count { font-size:11px; color:#4a6a8a; font-family:'JetBrains Mono',monospace; }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  .output-meta { display: flex; align-items: center; gap: 14px; }
+  .msg-count {
+    font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    color: var(--muted); letter-spacing: .5px;
+  }
   .copy-btn {
-    padding:6px 16px; border-radius:5px; font-size:12px;
-    font-family:'JetBrains Mono',monospace; font-weight:500;
-    cursor:pointer; transition:all .2s; min-width:80px;
-    background:rgba(80,160,255,.1); border:1px solid rgba(80,160,255,.25); color:#70b0ff;
+    padding: 7px 18px; border-radius: 2px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; transition: all .2s; min-width: 92px;
+    background: transparent; border: 1px solid var(--accent2); color: var(--accent2);
   }
-  .copy-btn:hover { background:rgba(80,160,255,.2); }
-  .copy-btn.copied { background:rgba(52,211,153,.15); border-color:rgba(52,211,153,.3); color:#34d399; }
+  .copy-btn:hover { background: var(--accent2); color: var(--bg); }
+  .copy-btn.copied { background: var(--success); border-color: var(--success); color: var(--bg); }
 
   .output-pre {
-    margin:0; padding:18px; font-size:12.5px;
-    font-family:'JetBrains Mono',monospace;
-    line-height:1.65; color:#a0c4e0;
-    overflow-x:auto; max-height:600px;
-    white-space:pre-wrap; word-break:break-all;
+    margin: 0; padding: 18px; font-size: 12.5px;
+    font-family: 'Share Tech Mono', monospace;
+    line-height: 1.65; color: #cfe3df;
+    overflow-x: auto; max-height: 600px;
+    white-space: pre-wrap; word-break: break-all;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
   }
-  .output-pre::-webkit-scrollbar { width:6px; height:6px; }
-  .output-pre::-webkit-scrollbar-track { background:rgba(0,0,0,.2); border-radius:3px; }
-  .output-pre::-webkit-scrollbar-thumb { background:rgba(80,160,255,.25); border-radius:3px; }
+  .output-pre::-webkit-scrollbar { width: 6px; height: 6px; }
+  .output-pre::-webkit-scrollbar-track { background: rgba(0,0,0,.2); }
+  .output-pre::-webkit-scrollbar-thumb { background: var(--accent2); opacity:.4; }
 
+  /* Reference */
   .ref {
-    margin-top:28px; padding:16px 20px;
-    background:rgba(20,30,50,.3); border-radius:8px;
-    border:1px solid rgba(80,130,200,.06); font-size:11.5px;
-    font-family:'JetBrains Mono',monospace; color:#4a6a8a; line-height:1.8;
+    margin-top: 24px; padding: 16px 20px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 2px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--muted); line-height: 1.85; letter-spacing: .5px;
   }
-  .ref b { color:#5a8aaa; font-weight:600; }
-  .ref .sep { margin:0 10px; color:#2a3a4a; }
-  .ref .dot { margin:0 8px; color:#2a3a4a; }
-  .ref .fld { color:#5a7a9a; }
+  .ref b { color: var(--accent2); font-weight: 400; text-transform: uppercase; letter-spacing: 1.5px; }
+  .ref .sep { margin: 0 10px; color: var(--border); }
+  .ref .dot { margin: 0 8px; color: var(--border); }
+  .ref .fld { color: var(--text); }
 
   input[type=number]::-webkit-inner-spin-button { opacity:.3; }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-row">
-    <div class="status-dot"></div>
-    <h1>Exacta Packout Test Builder</h1>
+<header>
+  <div class="logo">
+    <div class="logo-mark">EPB</div>
+    <div class="logo-title">Exacta Packout Test Builder</div>
   </div>
-  <p>Build Exacta packout ITEMSTATUS messages</p>
-  <div class="header-actions">
-    <button class="btn btn-green" onclick="fillSample()">Sample Data</button>
-    <button class="btn btn-amber" onclick="clearAll()">Clear All</button>
+  <div class="header-right">
+    <div class="status-bar">
+      <span class="status-dot"></span> SYSTEM READY &nbsp;|&nbsp;
+      <span class="count" id="statusCount">0 MESSAGES</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-green" onclick="fillSample()">Sample Data</button>
+      <button class="btn btn-amber" onclick="clearAll()">Clear All</button>
+    </div>
   </div>
-</div>
+</header>
 
 <div class="main">
+  <div class="section-label">Order Messages</div>
   <div id="orders"></div>
   <button class="add-order-btn" onclick="addOrder()">+ Add Order Message</button>
 
   <!-- Output -->
+  <div class="section-label spaced">Output</div>
   <div class="output-panel">
     <div class="output-header">
       <div class="tabs">
@@ -437,6 +494,9 @@ function renderOutput() {
   const n = state.orders.length;
   const totalSerials = state.orders.reduce((sum, o) => sum + o.serials.length, 0);
   el('msgCount').textContent = n + ' message' + (n !== 1 ? 's' : '') + ', ' + totalSerials + ' serial' + (totalSerials !== 1 ? 's' : '');
+
+  const sc = document.getElementById('statusCount');
+  if (sc) sc.textContent = (n + ' MESSAGE' + (n !== 1 ? 'S' : ''));
 
   if (state.mode === 'postman') {
     el('output').textContent = JSON.stringify(buildPostmanBody(), null, 4);
