@@ -373,11 +373,18 @@ function updateOrder(oid, key, val) {
   renderOutput();
 }
 
+// Packed qty mirrors the number of serials that actually have a value,
+// never counting blank lines, and never dropping below 1.
+function syncPackedQty(o) {
+  const filled = o.serials.filter(s => s.serial_number.trim()).length;
+  o.packed_qty = Math.max(1, filled);
+}
+
 function addSerial(oid) {
   const o = state.orders.find(o => o._id === oid);
   if (!o) return;
   o.serials.push({ _id: uid(), serial_number: '' });
-  o.packed_qty = o.serials.length;
+  syncPackedQty(o);
   o.guid = uuid();
   render();
 }
@@ -389,7 +396,7 @@ function addSerialAfter(oid, sid) {
   const idx = o.serials.findIndex(s => s._id === sid);
   const ns = { _id: uid(), serial_number: '' };
   o.serials.splice(idx + 1, 0, ns);
-  o.packed_qty = o.serials.length;
+  syncPackedQty(o);
   o.guid = uuid();
   render();
   const inp = document.getElementById('serial-inp-' + ns._id);
@@ -408,7 +415,7 @@ function removeSerial(oid, sid) {
   const o = state.orders.find(o => o._id === oid);
   if (!o) return;
   o.serials = o.serials.filter(s => s._id !== sid);
-  o.packed_qty = o.serials.filter(s => s.serial_number.trim()).length || o.serials.length;
+  syncPackedQty(o);
   o.guid = uuid();
   render();
 }
@@ -418,7 +425,7 @@ function updateSerial(oid, sid, val) {
   if (!o) return;
   const s = o.serials.find(s => s._id === sid);
   if (s) s.serial_number = val;
-  o.packed_qty = o.serials.filter(s => s.serial_number.trim()).length || o.serials.length;
+  syncPackedQty(o);
   o.guid = uuid();
   renderOutput();
 }
@@ -533,6 +540,10 @@ function renderOutput() {
   state.orders.forEach(o => {
     const guidEl = document.getElementById('guid-' + o._id);
     if (guidEl) guidEl.textContent = o.guid;
+    // Keep the visible packed-qty box in sync as serials are typed,
+    // but don't clobber the field while the user is editing it directly.
+    const qtyEl = document.getElementById('qty-' + o._id);
+    if (qtyEl && qtyEl !== document.activeElement) qtyEl.value = o.packed_qty;
   });
 }
 
@@ -567,7 +578,7 @@ function render() {
     html += `</div>`;
     html += `<div class="field-group">`;
     html += `<label>Packed Qty</label>`;
-    html += `<input class="inp" type="number" style="width:70px;" value="${o.packed_qty}" oninput="updateOrder('${o._id}','packed_qty',parseInt(this.value)||0)" />`;
+    html += `<input class="inp" id="qty-${o._id}" type="number" min="1" style="width:70px;" value="${o.packed_qty}" oninput="updateOrder('${o._id}','packed_qty',Math.max(1,parseInt(this.value)||1))" />`;
     html += `</div>`;
     html += `</div>`;
 
